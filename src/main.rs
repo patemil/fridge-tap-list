@@ -1,7 +1,9 @@
 #![no_std]
 #![no_main]
 
-use esp32_hal::{clock::ClockControl, pac::Peripherals, prelude::*, timer::TimerGroup, Rtc};
+use esp32_hal::{
+    clock::ClockControl, pac::Peripherals, prelude::*, timer::TimerGroup, Delay, Rtc, IO,
+};
 use esp_backtrace as _;
 
 #[xtensa_lx_rt::entry]
@@ -21,7 +23,15 @@ fn main() -> ! {
     wdt0.disable();
     wdt1.disable();
 
-    esp_println::println!("Hello, World!");
+    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    let mut led = io.pins.gpio2.into_push_pull_output();
 
-    loop {}
+    let mut delay = Delay::new(&clocks);
+
+    loop {
+        led.set_high().unwrap();
+        delay.delay_ms(250u32);
+        led.set_low().unwrap();
+        delay.delay_ms(250u32);
+    }
 }
