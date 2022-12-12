@@ -205,6 +205,7 @@ name = "fridge_tap_list"
 version = "0.1.0"
 dependencies = [
  "esp-backtrace",
+ "esp-println",
  "esp32-hal",
  "xtensa-lx-rt",
 ]
