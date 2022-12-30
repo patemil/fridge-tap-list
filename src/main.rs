@@ -34,6 +34,7 @@ use esp_backtrace as _;
 
 use greenpak::GreenPAK;
 use lm75::LM75;
+use shared_bus::BusManagerSimple;
 
 #[xtensa_lx_rt::entry]
 fn main() -> ! {
@@ -63,12 +64,13 @@ fn main() -> ! {
         &clocks,
     );
 
-    let mut greenpak = GreenPAK::new(i2c);
+    let i2c = BusManagerSimple::new(i2c);
+
+    let mut greenpak = GreenPAK::new(i2c.acquire_i2c());
     greenpak.write_program(&GREENPAK_DATA).unwrap();
-    let i2c = greenpak.free();
 
     let mut delay = Delay::new(&clocks);
-    let mut sensor = LM75::new(i2c);
+    let mut sensor = LM75::new(i2c.acquire_i2c());
 
     loop {
         let temp = sensor.measure().unwrap();
