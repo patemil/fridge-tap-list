@@ -1,15 +1,22 @@
 #![no_std]
 #![no_main]
 
+mod lm75;
+
+use esp_println::println;
+use fugit::RateExtU32;
+
 use esp32_hal::{
-    clock::ClockControl, pac::Peripherals, prelude::*, timer::TimerGroup, Delay, Rtc, IO,
+    clock::ClockControl, i2c::I2C, pac::Peripherals, prelude::*, timer::TimerGroup, Delay, Rtc, IO,
 };
 use esp_backtrace as _;
+
+use lm75::LM75;
 
 #[xtensa_lx_rt::entry]
 fn main() -> ! {
     let peripherals = Peripherals::take().unwrap();
-    let system = peripherals.DPORT.split();
+    let mut system = peripherals.DPORT.split();
     let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
     // Disable the RTC and TIMG watchdog timers
@@ -24,14 +31,24 @@ fn main() -> ! {
     wdt1.disable();
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
-    let mut led = io.pins.gpio2.into_push_pull_output();
+
+    let i2c = I2C::new(
+        peripherals.I2C0,
+        io.pins.gpio21.into_open_drain_output(),
+        io.pins.gpio22.into_open_drain_output(),
+        400u32.kHz(),
+        &mut system.peripheral_clock_control,
+        &clocks,
+    );
 
     let mut delay = Delay::new(&clocks);
+    let mut sensor = LM75::new(i2c);
 
     loop {
-        led.set_high().unwrap();
-        delay.delay_ms(250u32);
-        led.set_low().unwrap();
-        delay.delay_ms(250u32);
+        let temp = sensor.measure().unwrap();
+
+        println!("Temperature: {}°C", temp);
+
+        delay.delay_ms(1000u32);
     }
 }
