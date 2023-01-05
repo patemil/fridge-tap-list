@@ -12,12 +12,22 @@ impl<I: Write + WriteRead> GreenPAK<I> {
         GreenPAK { device: i2c }
     }
 
+    pub fn write_byte(&mut self, offset: u8, byte: u8) -> Result<(), <I as Write>::Error> {
+        self.device.write(ADDR, &[offset, byte])
+    }
+
     pub fn write_program(&mut self, data: &[u8; 256]) -> Result<(), <I as Write>::Error> {
         for (idx, byte) in data.iter().enumerate() {
             self.device.write(ADDR, &[idx as u8, *byte])?;
         }
 
         Ok(())
+    }
+
+    pub fn read_byte(&mut self, offset: u8) -> Result<u8, <I as WriteRead>::Error> {
+        let mut buf = [0u8; 1];
+        self.device.write_read(ADDR, &[offset], &mut buf)?;
+        Ok(buf[0])
     }
 
     pub fn read_program(&mut self) -> Result<[u8; 256], <I as WriteRead>::Error> {

@@ -209,6 +209,7 @@ dependencies = [
  "esp-println",
  "esp32-hal",
  "fugit",
+ "hex-literal",
  "shared-bus",
  "xtensa-lx-rt",
 ]
@@ -233,6 +234,12 @@ name = "heck"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
+
+[[package]]
+name = "hex-literal"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
 name = "ident_case"
