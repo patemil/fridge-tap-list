@@ -1,3 +1,9 @@
 {
     "rust-analyzer.checkOnSave.allTargets": false,
+    "idf.port": "/dev/cu.usbmodem12201",
+    "idf.adapterTargetName": "esp32c3",
+    "idf.openOcdConfigs": [
+        "board/esp32c3-bridge.cfg"
+    ],
+    "idf.flashType": "UART",
 }

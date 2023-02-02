@@ -12,6 +12,3 @@ target = "riscv32imac-unknown-none-elf"
 
 [unstable]
 build-std = ["core"]
-
-[rust]
-lld = true
