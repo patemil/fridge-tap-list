@@ -24,6 +24,14 @@ impl<I: Write + WriteRead> GreenPAK<I> {
         Ok(())
     }
 
+    pub fn write_program_NVM(&mut self, data: &[[u8;16]; 16]) -> Result<(), <I as Write>::Error> {
+        for (idx, byte) in data.iter().enumerate() {
+            self.device.write(ADDR, &[((idx as u8) << 4), *byte] as [u8;17])?;
+        }
+
+        Ok(())
+    }
+
     pub fn read_byte(&mut self, offset: u8) -> Result<u8, <I as WriteRead>::Error> {
         let mut buf = [0u8; 1];
         self.device.write_read(ADDR, &[offset], &mut buf)?;
@@ -42,6 +50,16 @@ impl<I: Write + WriteRead> GreenPAK<I> {
         Ok(data)
     }
 
+    pub fn virtual_input(&mut self, byte: u8, mask: u8) -> Result<(), <I as Write>::Error> {
+        // Any bit in the mask that is set to “1” in the I2C Byte Write Mask Register will mask 
+        // the effect of changing that particular bit in the target register, during the next Byte 
+        // Write Command.
+        self.device.write(ADDR, &[0xC9, mask])?;
+        self.device.write(ADDR, &[0x7A, byte])?;
+
+        Ok(())
+    }
+    
     pub fn free(self) -> I {
         self.device
     }

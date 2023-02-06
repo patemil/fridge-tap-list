@@ -88,12 +88,6 @@ fn select_lcd<I: embedded_hal::blocking::i2c::Write + embedded_hal::blocking::i2
     greenpak.write_byte(0x7A, 0b10000000 | (lcd << 4))
 }
 
-fn vgpio<I: embedded_hal::blocking::i2c::Write + embedded_hal::blocking::i2c::WriteRead> (greenpak: &mut GreenPAK<I>, vgpio: u8) -> Result<(), <I as embedded_hal::blocking::i2c::Write>::Error> {
-    assert!(true);
-
-    greenpak.write_byte(0x7A, vgpio)
-}
-
 #[riscv_rt::entry]
 fn main() -> ! {
     println!("Hello world");
@@ -128,18 +122,12 @@ fn main() -> ! {
 
     let mut greenpak = GreenPAK::new(i2c.acquire_i2c());
     log_error!(greenpak.write_program(&GREENPAK_DATA), "Failed to write program to GreenPAK");
+    // Enable slave select generation
+    log_error!(greenpak.virtual_input(0b10000000, 0b01111111), "Failed to write virtual input");
 
     let mut delay = Delay::new(&clocks);
     let mut sensor = LM75::new(i2c.acquire_i2c());
     let mut lcd = ST7032::new(i2c.acquire_i2c());
-
-    /* 
-    for i in 0..4 {
-        log_error!(select_lcd(&mut greenpak, i), "Failed to select LCD {}", i);
-        log_error!(lcd.init(), "Failed to initialize LCD {}", i);
-    }
-*/
-log_error!(vgpio(&mut greenpak, 0b10000000), "Failed to write vgpio");
 
     log_error!(select_lcd(&mut greenpak, 0), "Failed to select LCD 0");
     log_error!(lcd.set_line(0, "White House Ale"), "Failed to write to LCD 0");

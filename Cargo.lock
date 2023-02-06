@@ -104,7 +104,7 @@ dependencies = [
  "embedded-dma",
  "embedded-hal",
  "esp-hal-procmacros",
- "esp32c3",
+ "esp32c3 0.9.1",
  "fugit",
  "nb 1.0.0",
  "paste",
@@ -146,6 +146,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "esp32c3"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01c7dab51f66d25f62ffbed71242b7777e12e28d803b40ce60445c6abf0e1af1"
+dependencies = [
+ "vcell",
+]
+
+[[package]]
 name = "esp32c3-hal"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -172,6 +181,7 @@ dependencies = [
  "embedded-hal",
  "esp-backtrace",
  "esp-println",
+ "esp32c3 0.10.0",
  "esp32c3-hal",
  "fugit",
  "hex-literal",

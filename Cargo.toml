@@ -13,6 +13,7 @@ embedded-hal = "0.2.7"
 fugit = "0.3.6"
 hex-literal = "0.3.4"
 shared-bus = "0.2.5"
+esp32c3 = "0.10.0"
 
 [features]
 default = ["rt"]
