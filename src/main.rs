@@ -15,7 +15,7 @@ const GREENPAK_DATA: [u8; 256] = [
     0x8A, 0x00, 0x00, 0x00, 0xF4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x81, 0x00, 0x00, 0x0B, 0x00, 0x64, 0x00, 0x46, 0x40, 0x20, 0x0D, 0x25, 0x00, 0x20, 0x2D, 0x07,
     0x00, 0x00, 0x02, 0x01, 0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x02, 0x01, 0x00, 0x00, 0x02,
-    0x00, 0x01, 0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x01, 0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA5
@@ -54,6 +54,7 @@ use fugit::RateExtU32;
 use esp32c3_hal::{
     clock::ClockControl, i2c::I2C, peripherals::Peripherals, prelude::*, timer::TimerGroup, Delay, Rtc, gpio::IO,
 };
+
 use esp_backtrace as _;
 use esp_println::println;
 
@@ -84,7 +85,13 @@ macro_rules! log_error {
 fn select_lcd<I: embedded_hal::blocking::i2c::Write + embedded_hal::blocking::i2c::WriteRead> (greenpak: &mut GreenPAK<I>, lcd: u8) -> Result<(), <I as embedded_hal::blocking::i2c::Write>::Error> {
     assert!(lcd < 4);
 
-    greenpak.write_byte(0x7A, 0b01000000 | (lcd << 4))
+    greenpak.write_byte(0x7A, 0b10000000 | (lcd << 4))
+}
+
+fn vgpio<I: embedded_hal::blocking::i2c::Write + embedded_hal::blocking::i2c::WriteRead> (greenpak: &mut GreenPAK<I>, vgpio: u8) -> Result<(), <I as embedded_hal::blocking::i2c::Write>::Error> {
+    assert!(true);
+
+    greenpak.write_byte(0x7A, vgpio)
 }
 
 #[riscv_rt::entry]
@@ -110,9 +117,9 @@ fn main() -> ! {
 
     let i2c = I2C::new(
         peripherals.I2C0,
-        io.pins.gpio1.into_open_drain_output(),
-        io.pins.gpio2.into_open_drain_output(),
-        400u32.kHz(),
+        io.pins.gpio0,
+        io.pins.gpio1,
+        100u32.kHz(),
         &mut system.peripheral_clock_control,
         &clocks,
     );
@@ -126,10 +133,13 @@ fn main() -> ! {
     let mut sensor = LM75::new(i2c.acquire_i2c());
     let mut lcd = ST7032::new(i2c.acquire_i2c());
 
+    /* 
     for i in 0..4 {
         log_error!(select_lcd(&mut greenpak, i), "Failed to select LCD {}", i);
         log_error!(lcd.init(), "Failed to initialize LCD {}", i);
     }
+*/
+log_error!(vgpio(&mut greenpak, 0b10000000), "Failed to write vgpio");
 
     log_error!(select_lcd(&mut greenpak, 0), "Failed to select LCD 0");
     log_error!(lcd.set_line(0, "White House Ale"), "Failed to write to LCD 0");
