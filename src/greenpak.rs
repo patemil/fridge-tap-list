@@ -1,6 +1,8 @@
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
 const ADDR: u8 = 0b0001000;
+const ADDR_NVM: u8 = 0b00010010;
+const ADDR_EEPROM: u8 = 0b00010011;
 
 pub struct GreenPAK<I> {
     device: I,
@@ -26,7 +28,7 @@ impl<I: Write + WriteRead> GreenPAK<I> {
 
     pub fn write_program_nvm(&mut self, data: &[u8;256]) -> Result<(), <I as Write>::Error> {
         for (idx, chunk) in data.chunks_exact(16).enumerate() {
-            self.device.write(ADDR, &[(idx * 16) as u8, chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5], chunk[6], chunk[7], chunk[8], chunk[9], chunk[10], chunk[11], chunk[12], chunk[13], chunk[14], chunk[15]])?;
+            self.device.write(ADDR_NVM, &[(idx * 16) as u8, chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5], chunk[6], chunk[7], chunk[8], chunk[9], chunk[10], chunk[11], chunk[12], chunk[13], chunk[14], chunk[15]])?;
         }
 
         Ok(())
