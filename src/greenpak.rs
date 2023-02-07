@@ -27,7 +27,7 @@ impl<I: Write + WriteRead> GreenPAK<I> {
     }
 
     pub fn erase_nvm_page(&mut self, page: u8) -> Result<(), <I as Write>::Error> {
-        self.device.write(ADDR, &[0xE3, 0x80 ^ page])?;
+        self.device.write(ADDR, &[0xE3, 0x80 | page])?;
         Ok(())
     }
     pub fn write_program_nvm(&mut self, data: &[u8;256]) -> Result<(), <I as Write>::Error> {
