@@ -134,10 +134,12 @@ fn main() -> ! {
 
     let mut greenpak = GreenPAK::new(i2c.acquire_i2c());
 
+    /*
     for i in 0..16 {
-        log_error!(greenpak.erase_nvm_page(i as u8), "Failed to erase NVM page {}", i);
+        log_error!(greenpak.erase_nvm_page(i as u8), "Failed to erase GreenPAK NVM page {}", i);
         delay.delay_ms(20u32);
     }
+    */
     log_error!(greenpak.write_program_nvm(&GREENPAK_DATA), "Failed to write program to GreenPAK");
     // Enable slave select generation
     log_error!(greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
