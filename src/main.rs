@@ -130,13 +130,18 @@ fn main() -> ! {
     );
 
     let i2c = BusManagerSimple::new(i2c);
+    let mut delay = Delay::new(&clocks);
 
     let mut greenpak = GreenPAK::new(i2c.acquire_i2c());
+
+    for i in 0..16 {
+        log_error!(greenpak.erase_nvm_page(i as u8), "Failed to erase NVM page {}", i);
+        delay.delay_ms(20u32);
+    }
     log_error!(greenpak.write_program_nvm(&GREENPAK_DATA), "Failed to write program to GreenPAK");
     // Enable slave select generation
     log_error!(greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
-    
-    let mut delay = Delay::new(&clocks);
+
     let mut sensor = LM75::new(i2c.acquire_i2c());
    
     loop {
