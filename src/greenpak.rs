@@ -24,9 +24,9 @@ impl<I: Write + WriteRead> GreenPAK<I> {
         Ok(())
     }
 
-    pub fn write_program_NVM(&mut self, data: &[[u8;16]; 16]) -> Result<(), <I as Write>::Error> {
-        for (idx, byte) in data.iter().enumerate() {
-            self.device.write(ADDR, &[((idx as u8) << 4), *byte] as [u8;17])?;
+    pub fn write_program_nvm(&mut self, data: &[u8;256]) -> Result<(), <I as Write>::Error> {
+        for (idx, chunk) in data.chunks_exact(16).enumerate() {
+            self.device.write(ADDR, &[(idx * 16) as u8, chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5], chunk[6], chunk[7], chunk[8], chunk[9], chunk[10], chunk[11], chunk[12], chunk[13], chunk[14], chunk[15]])?;
         }
 
         Ok(())
