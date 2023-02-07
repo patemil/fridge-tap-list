@@ -140,7 +140,8 @@ fn main() -> ! {
         delay.delay_ms(20u32);
     }
     */
-    log_error!(greenpak.write_program_nvm(&GREENPAK_DATA), "Failed to write program to GreenPAK");
+    //log_error!(greenpak.write_program_nvm(&GREENPAK_DATA), "Failed to write program to GreenPAK");
+    log_error!(greenpak.write_program(&GREENPAK_DATA), "Failed to write program to GreenPAK");
     // Enable slave select generation
     log_error!(greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
 
