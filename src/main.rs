@@ -62,7 +62,7 @@ const GREENPAK_DATA_NVM: [[u8; 16]; 16] = [
  */
 
 mod greenpak;
-mod lm75;
+mod LTC2633;
 
 // use core::fmt::Write;
 
@@ -77,7 +77,6 @@ use esp_backtrace as _;
 use esp_println::println;
 
 use greenpak::GreenPAK;
-use lm75::LM75;
 use shared_bus::BusManagerSimple;
 
 macro_rules! log_error {
@@ -133,6 +132,7 @@ fn main() -> ! {
     let mut delay = Delay::new(&clocks);
 
     let mut greenpak = GreenPAK::new(i2c.acquire_i2c());
+    let mut DAC = LTC2633::new(i2c.acquire_i2c());
 
     /*
     for i in 0..16 {
@@ -145,10 +145,10 @@ fn main() -> ! {
     // Enable slave select generation
     log_error!(greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
 
-    let mut sensor = LM75::new(i2c.acquire_i2c());
+    log_error!(DAC.SelectInternalVREF(&DAC), "Failed to select internal VREF");
    
     loop {
-        let temp = sensor.measure().unwrap();
+        log_error!(DAC.write_u16(0, 0x0000), "Failed to write DAC");
 
         delay.delay_ms(1000u32);
     }
