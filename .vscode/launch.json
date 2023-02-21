@@ -1,0 +1,31 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // more info at: https://github.com/Marus/cortex-debug/blob/master/package.json
+      "name": "Attach",
+      "type": "cortex-debug",
+      "request": "attach", // attach instead of launch, because otherwise flash write is attempted, but fails
+      "cwd": "${workspaceRoot}",
+      "executable": "target/riscv32imac-unknown-none-elf/debug/fridge_tap_list", //
+      "servertype": "openocd",
+      "interface": "jtag",
+      //"svdFile": "../../esp-pacs/esp32c3/svd/esp32c3.svd",
+      "toolchainPrefix": "riscv32-esp-elf",
+      //"openOCDPreConfigLaunchCommands": ["set ESP_RTOS none"],
+      "serverpath": "/Users/pemil/.espressif/tools/openocd-esp32/v0.11.0-esp32-20221026/openocd-esp32/bin/openocd",
+      "configFiles": ["/Users/pemil/.espressif/tools/openocd-esp32/v0.11.0-esp32-20221026/openocd-esp32/share/openocd/scripts/board/esp32c3-builtin.cfg"],
+      "armToolchainPath": "/Users/pemil/.espressif/tools/riscv32-esp-elf-gdb/11.2_20220823/riscv32-esp-elf-gdb/bin/"
+      "overrideAttachCommands": [
+        "set remote hardware-watchpoint-limit 2",
+        "mon halt",
+        "flushregs"
+      ],
+      "overrideRestartCommands": ["mon reset halt", "flushregs", "c"]
+    }
+  ]
+}
+cortex-debug.armToolchainPath

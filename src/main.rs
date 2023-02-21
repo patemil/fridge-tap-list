@@ -1,3 +1,110 @@
+/*
+//! This shows how to configure UART
+//! You can short the TX and RX pin and see it reads what was written.
+//! Additionally you can connect a logic analzyer to TX and see how the changes
+//! of the configuration change the output signal.
+
+#![no_std]
+#![no_main]
+
+extern crate alloc;
+
+#[global_allocator]
+static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
+
+fn init_heap() {
+    const HEAP_SIZE: usize = 32 * 1024;
+
+    extern "C" {
+        static mut _heap_start: u32;
+    }
+
+    unsafe {
+        let heap_start = &_heap_start as *const _ as usize;
+        ALLOCATOR.init(heap_start as *mut u8, HEAP_SIZE);
+    }
+}
+
+use esp32c3_hal::{
+    clock::ClockControl,
+    peripherals::Peripherals,
+    prelude::*,
+    timer::TimerGroup,
+    uart::{
+        config::{Config, DataBits, Parity, StopBits},
+        TxRxPins,
+    },
+    Rtc,
+    Uart,
+    IO,
+};
+use esp_backtrace as _;
+use esp_println::println;
+use nb::block;
+
+use alloc::string::String;
+use core::char;
+
+#[riscv_rt::entry]
+fn main() -> ! {
+    init_heap(); 
+    let peripherals = Peripherals::take();
+    let system = peripherals.SYSTEM.split();
+    let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
+
+    let mut rtc = Rtc::new(peripherals.RTC_CNTL);
+    let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
+    let mut timer0 = timer_group0.timer0;
+    let mut wdt0 = timer_group0.wdt;
+    let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
+    let mut wdt1 = timer_group1.wdt;
+
+    // Disable watchdog timers
+    rtc.swd.disable();
+    rtc.rwdt.disable();
+    wdt0.disable();
+    wdt1.disable();
+
+    let config = Config {
+        baudrate: 115200,
+        data_bits: DataBits::DataBits8,
+        parity: Parity::ParityNone,
+        stop_bits: StopBits::STOP1,
+    };
+
+    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    let pins = TxRxPins::new_tx_rx(
+        io.pins.gpio21.into_push_pull_output(),
+        io.pins.gpio20.into_floating_input(),
+    );
+
+    let mut serial1 = Uart::new_with_config(peripherals.UART1, Some(config), Some(pins), &clocks);
+
+    timer0.start(250u64.millis());
+
+    println!("Start");
+    loop {
+        
+        let mut line = String::with_capacity(40);
+
+        loop {
+            let c : char = char::from_u32(block!(serial1.read()).unwrap().into()).unwrap();
+
+            match c {
+                '\r' => continue,
+                '\n' => break,
+                _ => line.push(c.to_ascii_lowercase()),
+            }
+            serial1.write(char::from(c).into());
+        }
+        println!("line read");
+        println!("text:{}",line);
+
+        block!(timer0.wait()).unwrap();
+    }
+}
+*/
+
 #![no_std]
 #![no_main]
 
@@ -21,41 +128,47 @@ const GREENPAK_DATA: [u8; 256] = [
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA5
 ];
 
-/*
-[
-    0xD0, 0x0A, 0xA5, 0x58, 0x5D, 0xD3, 0x0A, 0x43, 0x37, 0x08, 0x3D, 0x49, 0x75, 0x5A, 0xD3, 0x69,
-    0x4D, 0xA7, 0x35, 0x9D, 0x2C, 0x34, 0x20, 0x1C, 0x74, 0x0D, 0xA4, 0x54, 0x81, 0x02, 0xE7, 0xFA,
-    0x18, 0x2A, 0xB0, 0xD6, 0xF4, 0x5A, 0xD3, 0x6B, 0x4D, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x80, 0x03, 0x00, 0x00, 0x0A, 0xA8, 0xB7, 0x0D, 0xB8, 0xC0, 0x05, 0xB4, 0x80,
-    0x05, 0xB0, 0x40, 0x05, 0x44, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x30, 0x58, 0x00, 0x20, 0x20, 0x58, 0x58, 0x00, 0x00, 0x80, 0x80, 0x58, 0x00, 0x58, 0x58,
-    0x58, 0x58, 0x58, 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x22, 0x30, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x28, 0x88, 0x00, 0x00, 0xAC, 0xAC, 0xAC, 0x02, 0x20, 0x08, 0x00, 0x00, 0xAC, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0xAC, 0x20, 0x00, 0x01, 0x00, 0x14, 0x01, 0x10, 0x08, 0x60, 0x01, 0x10, 0x00, 0x08,
-    0x14, 0x01, 0x10, 0x08, 0x60, 0x01, 0x10, 0x00, 0x08, 0x00, 0x02, 0x02, 0x01, 0x00, 0x20, 0x02,
-    0x00, 0x01, 0x00, 0x08, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA5,
-];
- */
-
 mod greenpak;
 mod lm75;
 mod st7032;
 
+
+extern crate alloc;
+
+#[global_allocator]  // necessary for correct work of alloc on ESP chips
+static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
+
+
+
+fn init_heap() {
+    const HEAP_SIZE: usize = 32 * 1024;
+
+    extern "C" {
+        static mut _heap_start: u32;
+    }
+
+    unsafe {
+        let heap_start = &_heap_start as *const _ as usize;
+        ALLOCATOR.init(heap_start as *mut u8, HEAP_SIZE);
+    }
+}
+
+use alloc::{str::FromStr, string::ToString};
 use core::fmt::Write;
-
-//use esp_println::println;
-use fugit::RateExtU32;
-
-use esp32c3_hal::{
-    clock::ClockControl, i2c::I2C, peripherals::Peripherals, prelude::*, timer::TimerGroup, Delay, Rtc, gpio::IO,
-};
-use esp_backtrace as _;
+use alloc::string::String;
 use esp_println::println;
+use nb::block;
+use fugit::RateExtU32;
+use esp32c3_hal::{
+    clock::ClockControl, i2c::I2C, prelude::*, timer::TimerGroup, Delay, Rtc, gpio::IO
+};
+use esp32c3_hal::    uart::{
+        config::{Config, DataBits, Parity, StopBits},
+        TxRxPins,
+    };
+use esp32c3_hal::Uart;
+
+use esp_backtrace as _;
 
 use greenpak::GreenPAK;
 use lm75::LM75;
@@ -87,13 +200,19 @@ fn select_lcd<I: embedded_hal::blocking::i2c::Write + embedded_hal::blocking::i2
     greenpak.write_byte(0x7A, 0b01000000 | (lcd << 4))
 }
 
+use core::char;
+
 #[riscv_rt::entry]
 fn main() -> ! {
+    
+    init_heap();
     println!("Hello world");
-    let peripherals = Peripherals::take();
+    let peripherals = esp32c3_hal::peripherals::Peripherals::take();
     let mut system = peripherals.SYSTEM.split();
     let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
+    //let mut serial0 = uart::new(peripherals.UART0).unwrap();
+    
     // Disable the RTC and TIMG watchdog timers
     let mut rtc = Rtc::new(peripherals.RTC_CNTL);
     let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
@@ -126,10 +245,72 @@ fn main() -> ! {
     let mut sensor = LM75::new(i2c.acquire_i2c());
     let mut lcd = ST7032::new(i2c.acquire_i2c());
 
-    for i in 0..4 {
+    for i in 0..0 {
         log_error!(select_lcd(&mut greenpak, i), "Failed to select LCD {}", i);
         log_error!(lcd.init(), "Failed to initialize LCD {}", i);
     }
+
+   let config = Config {
+        baudrate: 115200,
+        data_bits: DataBits::DataBits8,
+        parity: Parity::ParityNone,
+        stop_bits: StopBits::STOP1,
+    };
+
+    //let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    let pins = TxRxPins::new_tx_rx(
+        io.pins.gpio21.into_push_pull_output(),
+        io.pins.gpio20.into_floating_input(),
+    );
+
+    let mut serial1 = Uart::new_with_config(peripherals.UART1, Some(config), Some(pins), &clocks);
+
+
+    enum Command {
+        SetOffset(f32),
+        SetSamplingRate(u32),
+    }
+
+    impl FromStr for Command {
+        type Err = String;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let mut parts = s.split_whitespace();
+
+            let command = parts.next().ok_or("No command")?;
+
+            match command {
+                "Set_offset" => {
+                    let value = parts.next().ok_or("No value")?;
+                    let value = value.parse::<f32>().map_err(|_| "Invalid value")?;
+                    Ok(Command::SetOffset(value))
+                }
+                "Set_samplingrate" => {
+                    let value = parts.next().ok_or("No value")?;
+                    let value = value.parse::<u32>().map_err(|_| "Invalid value")?;
+                    Ok(Command::SetSamplingRate(value))
+                }
+                _ => Err("Invalid command".to_string()),
+            }
+        }
+    }
+
+// ...
+
+/*
+for cmd in input.lines() {
+    let cmd = input.parse::<Command>()?;
+    
+    match command {
+        Command::SetOffset(offset) => {
+            println!("Setting offset to {}", offset);
+        }
+        Command::SetSamplingRate(rate) => {
+            println!("Setting sampling rate to {}", rate);
+        }
+    }
+}
+*/
 
     log_error!(select_lcd(&mut greenpak, 0), "Failed to select LCD 0");
     log_error!(lcd.set_line(0, "White House Ale"), "Failed to write to LCD 0");
@@ -144,12 +325,27 @@ fn main() -> ! {
     log_error!(lcd.set_line(0, "Reservoir Hops"), "Failed to write to LCD 3");
 
     loop {
-        let temp = sensor.measure().unwrap();
+
+        let mut line = String::with_capacity(40);
+
+        loop {
+            let c : char = char::from_u32(block!(serial1.read()).unwrap().into()).unwrap();
+
+            match c {
+                '\r' => continue,
+                '\n' => break,
+                _ => line.push(c.to_ascii_lowercase()),
+            }
+        }
+        println!("line read");
+        println!("text:{}",line);
+
+        /*let temp = sensor.measure().unwrap();
 
         log_error!(select_lcd(&mut greenpak, 0), "Failed to select LCD 0");
         log_error!(lcd.set_cursor(0, 1), "Failed to set cursor on LCD 0");
         log_error!(write!(lcd, "Temp: {: >5.1}°C", temp), "Failed to write to LCD 0");
-
+*/
         delay.delay_ms(1000u32);
     }
 }
