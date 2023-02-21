@@ -61,12 +61,15 @@ const GREENPAK_DATA_NVM: [[u8; 16]; 16] = [
 ];
  */
 
+mod ltc2633;
 mod greenpak;
-mod LTC2633;
-mod SC18IS606;
+mod sc18is606;
 mod st7032;
+mod lm75;
 
+use crate::lm75::LM75;
 use crate::st7032::ST7032;
+use crate::ltc2633::LTC2633;
 
 
 extern crate alloc;
@@ -90,7 +93,7 @@ fn init_heap() {
 }
 
 use alloc::{str::FromStr, string::ToString};
-use core::fmt::Write;
+//use core::fmt::Write;
 use alloc::string::String;
 use esp_println::println;
 use nb::block;
@@ -176,8 +179,7 @@ fn main() -> ! {
     let mut greenpak = GreenPAK::new(i2c.acquire_i2c());
     let mut DAC = LTC2633::new(i2c.acquire_i2c());
 
-    let mut delay = Delay::new(&clocks);
-    let mut sensor = LM75::new(i2c.acquire_i2c());
+    let _sensor = LM75::new(i2c.acquire_i2c());
     let mut lcd = ST7032::new(i2c.acquire_i2c());
 
     for i in 0..0 {
@@ -291,10 +293,10 @@ for cmd in input.lines() {
         log_error!(lcd.set_cursor(0, 1), "Failed to set cursor on LCD 0");
         log_error!(write!(lcd, "Temp: {: >5.1}°C", temp), "Failed to write to LCD 0");
         */
-        log_error!(DAC.SelectInternalVREF(&DAC), "Failed to select internal VREF");
+        log_error!(DAC.SelectInternalVREF(), "Failed to select internal VREF");
     
         loop {
-            log_error!(DAC.write_u16(0, 0x0000), "Failed to write DAC");
+            log_error!(DAC.write_u16(0), "Failed to write DAC");
 
             delay.delay_ms(1000u32);
         }

@@ -1,6 +1,6 @@
 use embedded_hal::blocking::i2c::WriteRead;
 
-const LM75_I2CADDR: u8 = 0x48;
+pub const LM75_I2CADDR: u8 = 0x48;
 
 pub struct LM75<I> {
     device: I,

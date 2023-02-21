@@ -1,4 +1,5 @@
 use embedded_hal::blocking::i2c::WriteRead;
+use crate::lm75::LM75_I2CADDR;
 
 const SC18IS606_I2CADDR: u8 = 0x50;
 

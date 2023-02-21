@@ -21,13 +21,13 @@ impl<I: Write> LTC2633<I> {
         LTC2633 { device: i2c }
     }
 
-    fn SelectInternalVREF (&mut self) -> Result<(), I::Error> {
+    pub fn SelectInternalVREF (&mut self) -> Result<(), I::Error> {
         self.device.write(LTC2633_I2CADDR, &[CMD_SelectInternalVREF ^ ADR_DACA, 0x0, 0x0]) ?;
         self.device.write(LTC2633_I2CADDR, &[CMD_SelectInternalVREF ^ ADR_DACB, 0x0, 0x0]) ?;
         Ok(())
     }
 
-    fn write_u16(&mut self, reg: u16) -> Result<u16, I::Error> {
+    pub fn write_u16(&mut self, _reg: u16) -> Result<u16, I::Error> {
         let mut buf = [0u8; 2];
         self.device.write(LTC2633_I2CADDR, &mut buf[..])?;
         Ok(u16::from_be_bytes(buf))
