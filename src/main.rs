@@ -216,6 +216,7 @@ fn main() -> ! {
     enum Command {
         SetOffset(f32),
         SetSamplingRate(u32),
+        NoCommand,
     }
 
     impl FromStr for Command {
@@ -242,22 +243,7 @@ fn main() -> ! {
         }
     }
 
-// ...
 
-/*
-for cmd in input.lines() {
-    let cmd = input.parse::<Command>()?;
-    
-    match command {
-        Command::SetOffset(offset) => {
-            println!("Setting offset to {}", offset);
-        }
-        Command::SetSamplingRate(rate) => {
-            println!("Setting sampling rate to {}", rate);
-        }
-    }
-}
-*/
 
     log_error!(select_lcd(&mut greenpak, 0), "Failed to select LCD 0");
     log_error!(lcd.set_line(0, "White House Ale"), "Failed to write to LCD 0");
@@ -270,6 +256,10 @@ for cmd in input.lines() {
 
     log_error!(select_lcd(&mut greenpak, 3), "Failed to select LCD 3");
     log_error!(lcd.set_line(0, "Reservoir Hops"), "Failed to write to LCD 3");
+
+    writeln!(serial1,"");
+    writeln!(serial1,"");
+    writeln!(serial1,"FFI 2023-02-23");
 
     loop {
 
@@ -284,26 +274,33 @@ for cmd in input.lines() {
                     '\n' => break,
                     _ => line.push(c),
                 }
-                write!(serial1,"{}",c);
+                write!(serial1,"\r{}",line);
             }
-            writeln!(serial1,"line read :{} :{}",line.len(), line);
+            //writeln!(serial1,"line read :{} :{}",line.len(), line);
 
-           
-                let cmd = line.parse::<Command>();
-                
-                match cmd.unwrap() {
+            writeln!(serial1,"");
+            if let Ok(cmd) = line.parse::<Command>() {
+
+                match cmd {
                     Command::SetOffset(offset) => {
                         writeln!(serial1,"Setting offset to {}", offset);
                     }
                     Command::SetSamplingRate(rate) => {
                         writeln!(serial1,"Setting sampling rate to {}", rate);
                     }
+                    Command::NoCommand => {
+                        writeln!(serial1,"No command");
+                    }
+
                 }
-            
+            } else { 
+                writeln!(serial1, " Command not found or mising parameter");
+            }
 
             //writeln!(serial1,"line read :{} :{}",line.len(), line);
 
             line.clear();
+            writeln!(serial1,"");
         }    
 
         /*let temp = sensor.measure().unwrap();
