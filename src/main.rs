@@ -93,7 +93,7 @@ fn init_heap() {
 }
 
 use alloc::{str::FromStr, string::ToString};
-//use core::fmt::Write;
+use core::fmt::Write;
 use alloc::string::String;
 use esp_println::println;
 use nb::block;
@@ -227,12 +227,12 @@ fn main() -> ! {
             let command = parts.next().ok_or("No command")?;
 
             match command {
-                "Set_offset" => {
+                "offset" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<f32>().map_err(|_| "Invalid value")?;
                     Ok(Command::SetOffset(value))
                 }
-                "Set_samplingrate" => {
+                "rate" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u32>().map_err(|_| "Invalid value")?;
                     Ok(Command::SetSamplingRate(value))
@@ -275,17 +275,36 @@ for cmd in input.lines() {
 
         let mut line = String::with_capacity(40);
 
-        loop {
-            let c : char = char::from_u32(block!(serial1.read()).unwrap().into()).unwrap();
+        loop{
+            loop {
+                let c : char = char::from_u32(block!(serial1.read()).unwrap().into()).unwrap();
 
-            match c {
-                '\r' => continue,
-                '\n' => break,
-                _ => line.push(c.to_ascii_lowercase()),
+                match c {
+                    '\r' => break,
+                    '\n' => break,
+                    _ => line.push(c),
+                }
+                write!(serial1,"{}",c);
             }
-        }
-        println!("line read");
-        println!("text:{}",line);
+            writeln!(serial1,"line read :{} :{}",line.len(), line);
+
+           
+                let cmd = line.parse::<Command>();
+                
+                match cmd.unwrap() {
+                    Command::SetOffset(offset) => {
+                        writeln!(serial1,"Setting offset to {}", offset);
+                    }
+                    Command::SetSamplingRate(rate) => {
+                        writeln!(serial1,"Setting sampling rate to {}", rate);
+                    }
+                }
+            
+
+            //writeln!(serial1,"line read :{} :{}",line.len(), line);
+
+            line.clear();
+        }    
 
         /*let temp = sensor.measure().unwrap();
 
