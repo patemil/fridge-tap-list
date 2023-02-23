@@ -40,44 +40,16 @@ const GREENPAK_DATA_NVM: [[u8; 16]; 16] = [
     [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA5]
 ];
 
-/*
-[
-    0xD0, 0x0A, 0xA5, 0x58, 0x5D, 0xD3, 0x0A, 0x43, 0x37, 0x08, 0x3D, 0x49, 0x75, 0x5A, 0xD3, 0x69,
-    0x4D, 0xA7, 0x35, 0x9D, 0x2C, 0x34, 0x20, 0x1C, 0x74, 0x0D, 0xA4, 0x54, 0x81, 0x02, 0xE7, 0xFA,
-    0x18, 0x2A, 0xB0, 0xD6, 0xF4, 0x5A, 0xD3, 0x6B, 0x4D, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x80, 0x03, 0x00, 0x00, 0x0A, 0xA8, 0xB7, 0x0D, 0xB8, 0xC0, 0x05, 0xB4, 0x80,
-    0x05, 0xB0, 0x40, 0x05, 0x44, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x30, 0x58, 0x00, 0x20, 0x20, 0x58, 0x58, 0x00, 0x00, 0x80, 0x80, 0x58, 0x00, 0x58, 0x58,
-    0x58, 0x58, 0x58, 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x22, 0x30, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x28, 0x88, 0x00, 0x00, 0xAC, 0xAC, 0xAC, 0x02, 0x20, 0x08, 0x00, 0x00, 0xAC, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0xAC, 0x20, 0x00, 0x01, 0x00, 0x14, 0x01, 0x10, 0x08, 0x60, 0x01, 0x10, 0x00, 0x08,
-    0x14, 0x01, 0x10, 0x08, 0x60, 0x01, 0x10, 0x00, 0x08, 0x00, 0x02, 0x02, 0x01, 0x00, 0x20, 0x02,
-    0x00, 0x01, 0x00, 0x08, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA5,
-];
- */
-
 mod ltc2633;
 mod greenpak;
 mod sc18is606;
-mod st7032;
-mod lm75;
 
-use crate::lm75::LM75;
-use crate::st7032::ST7032;
 use crate::ltc2633::LTC2633;
-
 
 extern crate alloc;
 
 #[global_allocator]  // necessary for correct work of alloc on ESP chips
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
-
-
 
 fn init_heap() {
     const HEAP_SIZE: usize = 32 * 1024;
@@ -131,11 +103,6 @@ macro_rules! log_error {
     };
 }
 
-fn select_lcd<I: embedded_hal::blocking::i2c::Write + embedded_hal::blocking::i2c::WriteRead> (greenpak: &mut GreenPAK<I>, lcd: u8) -> Result<(), <I as embedded_hal::blocking::i2c::Write>::Error> {
-    assert!(lcd < 4);
-
-    greenpak.write_byte(0x7A, 0b01000000 | (lcd << 4))
-}
 
 use core::char;
 
@@ -177,25 +144,22 @@ fn main() -> ! {
     let mut delay = Delay::new(&clocks);
 
     let mut greenpak = GreenPAK::new(i2c.acquire_i2c());
-    let mut DAC = LTC2633::new(i2c.acquire_i2c());
+    let mut dac = LTC2633::new(i2c.acquire_i2c());
 
-    let _sensor = LM75::new(i2c.acquire_i2c());
-    let mut lcd = ST7032::new(i2c.acquire_i2c());
-
-    for i in 0..0 {
-        log_error!(select_lcd(&mut greenpak, i), "Failed to select LCD {}", i);
-        log_error!(lcd.init(), "Failed to initialize LCD {}", i);
-    }
     /*
     for i in 0..16 {
         log_error!(greenpak.erase_nvm_page(i as u8), "Failed to erase GreenPAK NVM page {}", i);
         delay.delay_ms(20u32);
     }
-    */
-    //log_error!(greenpak.write_program_nvm(&GREENPAK_DATA), "Failed to write program to GreenPAK");
     log_error!(greenpak.write_program(&GREENPAK_DATA), "Failed to write program to GreenPAK");
+    */
+
     // Enable slave select generation
     log_error!(greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
+
+    // Set internal VREF
+    log_error!(dac.select_internal_vref(), "Failed to select internal VREF");
+    log_error!(dac.write_u16(1000), "Failed to write DAC");
 
    let config = Config {
         baudrate: 115200,
@@ -214,7 +178,7 @@ fn main() -> ! {
 
 
     enum Command {
-        SetOffset(f32),
+        SetOffset(u16),
         SetSamplingRate(u32),
         NoCommand,
     }
@@ -230,7 +194,8 @@ fn main() -> ! {
             match command {
                 "offset" => {
                     let value = parts.next().ok_or("No value")?;
-                    let value = value.parse::<f32>().map_err(|_| "Invalid value")?;
+                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    log_error!(dac.write_u16(value), "Failed to write DAC");
                     Ok(Command::SetOffset(value))
                 }
                 "rate" => {
@@ -242,20 +207,6 @@ fn main() -> ! {
             }
         }
     }
-
-
-
-    log_error!(select_lcd(&mut greenpak, 0), "Failed to select LCD 0");
-    log_error!(lcd.set_line(0, "White House Ale"), "Failed to write to LCD 0");
-
-    log_error!(select_lcd(&mut greenpak, 1), "Failed to select LCD 1");
-    log_error!(lcd.set_line(0, "Milky Way"), "Failed to write to LCD 1");
-
-    log_error!(select_lcd(&mut greenpak, 2), "Failed to select LCD 2");
-    log_error!(lcd.set_line(0, "Jul 2022"), "Failed to write to LCD 2");
-
-    log_error!(select_lcd(&mut greenpak, 3), "Failed to select LCD 3");
-    log_error!(lcd.set_line(0, "Reservoir Hops"), "Failed to write to LCD 3");
 
     writeln!(serial1,"");
     writeln!(serial1,"");
@@ -303,18 +254,5 @@ fn main() -> ! {
             writeln!(serial1,"");
         }    
 
-        /*let temp = sensor.measure().unwrap();
-
-        log_error!(select_lcd(&mut greenpak, 0), "Failed to select LCD 0");
-        log_error!(lcd.set_cursor(0, 1), "Failed to set cursor on LCD 0");
-        log_error!(write!(lcd, "Temp: {: >5.1}°C", temp), "Failed to write to LCD 0");
-        */
-        log_error!(DAC.SelectInternalVREF(), "Failed to select internal VREF");
-    
-        loop {
-            log_error!(DAC.write_u16(0), "Failed to write DAC");
-
-            delay.delay_ms(1000u32);
-        }
     }
 }

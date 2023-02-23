@@ -1,5 +1,4 @@
 use embedded_hal::blocking::i2c::WriteRead;
-use crate::lm75::LM75_I2CADDR;
 
 const SC18IS606_I2CADDR: u8 = 0x50;
 
@@ -21,7 +20,7 @@ impl<I: WriteRead> SC18IS606<I> {
 
     fn read_u16(&mut self, reg: u8) -> Result<u16, I::Error> {
         let mut buf = [0u8; 2];
-        self.device.write_read(LM75_I2CADDR, &[reg], &mut buf[..])?;
+        self.device.write_read(SC18IS606_I2CADDR, &[reg], &mut buf[..])?;
         Ok(u16::from_be_bytes(buf))
     }
 }
