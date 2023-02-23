@@ -220,6 +220,8 @@ fn main() -> ! {
         }
     }
 
+    const BACKSPACE: char = 8u8 as char;
+
     writeln!(serial1,"");
     writeln!(serial1,"");
     writeln!(serial1,"FFI 2023-02-23");
@@ -235,9 +237,11 @@ fn main() -> ! {
                 match c {
                     '\r' => break,
                     '\n' => break,
+                    '\u{8}' => {line.pop();},
                     _ => line.push(c),
                 }
-                write!(serial1,"\r{}",line);
+
+                write!(serial1,"\u{8} \r{}",line);
             }
             //writeln!(serial1,"line read :{} :{}",line.len(), line);
 
@@ -253,8 +257,9 @@ fn main() -> ! {
                         
                     }
                     Command::SetVRef(vref) => {
+                        writeln!(serial1, "Setting internal VRef to {}", vref);
                         log_error!(serial1, dac.select_internal_vref(), "Failed to select internal VREF");
-                        log_error!(serial1, dac.write_u16(vref), "Failed to write DAC");
+                        log_error!(serial1, dac.write_u16(vref), "Failed to write to DAC");
                         
                     }
 
