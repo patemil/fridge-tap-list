@@ -251,6 +251,8 @@ fn main() -> ! {
                 match cmd {
                     Command::SetOffset(offset) => {
                         writeln!(serial1,"Setting offset to {}", offset);
+                        log_error!(serial1, dac.select_internal_vref(), "Failed to select internal VREF");
+                        log_error!(serial1, dac.write_u16(offset), "Failed to write to DAC");
                     }
                     Command::SetSamplingRate(rate) => {
                         writeln!(serial1, "Setting sampling rate to {}", rate);
