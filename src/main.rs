@@ -195,7 +195,6 @@ fn main() -> ! {
                 "offset" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
-                    log_error!(dac.write_u16(value), "Failed to write DAC");
                     Ok(Command::SetOffset(value))
                 }
                 "rate" => {
@@ -238,6 +237,7 @@ fn main() -> ! {
                     }
                     Command::SetSamplingRate(rate) => {
                         writeln!(serial1,"Setting sampling rate to {}", rate);
+                        log_error!(dac.write_u16(rate.try_into().unwrap()), "Failed to write DAC");
                     }
                     Command::NoCommand => {
                         writeln!(serial1,"No command");
