@@ -84,20 +84,26 @@ use esp_backtrace as _;
 use greenpak::GreenPAK;
 use shared_bus::BusManagerSimple;
 
+
+
+
 macro_rules! log_error {
-    ($value:expr, $message:expr) => {
+    ($sport:ident, $value:expr, $message:expr) => {
         match $value {
             Ok(_) => {},
             Err(err) => {
-                esp_println::println!(concat!($message, ": {:?}"), err)
+                //esp_println::println!(concat!($message, ": {:?}"), err)
+                writeln!($sport, concat!($message, ": {:?}"), err);
+                //writeln!($sport, concat!($message, ": {:?}"), err)
             }
         }
     };
-    ($value:expr, $message:expr$(, $args:expr)*) => {
+    ($port:expr, $value:expr, $message:expr$(, $args:expr)*) => {
         match $value {
             Ok(_) => {},
             Err(err) => {
-                esp_println::println!(concat!($message, ": {:?}"), $($args),*, err)
+                writeln!($sport, concat!($message, ": {:?}"), $($args),*, err);
+                //esp_println::println!(concat!($message, ": {:?}"), $($args),*, err)
             }
         }
     };
@@ -146,22 +152,7 @@ fn main() -> ! {
     let mut greenpak = GreenPAK::new(i2c.acquire_i2c());
     let mut dac = LTC2633::new(i2c.acquire_i2c());
 
-    /*
-    for i in 0..16 {
-        log_error!(greenpak.erase_nvm_page(i as u8), "Failed to erase GreenPAK NVM page {}", i);
-        delay.delay_ms(20u32);
-    }
-    log_error!(greenpak.write_program(&GREENPAK_DATA), "Failed to write program to GreenPAK");
-    */
-
-    // Enable slave select generation
-    log_error!(greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
-
-    // Set internal VREF
-    log_error!(dac.select_internal_vref(), "Failed to select internal VREF");
-    log_error!(dac.write_u16(1000), "Failed to write DAC");
-
-   let config = Config {
+    let config = Config {
         baudrate: 115200,
         data_bits: DataBits::DataBits8,
         parity: Parity::ParityNone,
@@ -177,10 +168,27 @@ fn main() -> ! {
     let mut serial1 = Uart::new_with_config(peripherals.UART1, Some(config), Some(pins), &clocks);
 
 
+    /*
+    for i in 0..16 {
+        log_error!(greenpak.erase_nvm_page(i as u8), "Failed to erase GreenPAK NVM page {}", i);
+        delay.delay_ms(20u32);
+    }
+    log_error!(greenpak.write_program(&GREENPAK_DATA), "Failed to write program to GreenPAK");
+    */
+
+    // Enable slave select generation
+    log_error!(serial1, greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
+
+    // Set internal VREF
+    log_error!(serial1, dac.select_internal_vref(), "Failed to select internal VREF");
+    log_error!(serial1, dac.write_u16(1000), "Failed to write DAC");
+
+   
+
     enum Command {
         SetOffset(u16),
-        SetSamplingRate(u32),
-        NoCommand,
+        SetSamplingRate(u16),
+        SetVRef(u16),
     }
 
     impl FromStr for Command {
@@ -199,8 +207,13 @@ fn main() -> ! {
                 }
                 "rate" => {
                     let value = parts.next().ok_or("No value")?;
-                    let value = value.parse::<u32>().map_err(|_| "Invalid value")?;
+                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
                     Ok(Command::SetSamplingRate(value))
+                }
+                "vref" => {
+                    let value = parts.next().ok_or("No value")?;
+                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    Ok(Command::SetVRef(value))
                 }
                 _ => Err("Invalid command".to_string()),
             }
@@ -236,11 +249,13 @@ fn main() -> ! {
                         writeln!(serial1,"Setting offset to {}", offset);
                     }
                     Command::SetSamplingRate(rate) => {
-                        writeln!(serial1,"Setting sampling rate to {}", rate);
-                        log_error!(dac.write_u16(rate.try_into().unwrap()), "Failed to write DAC");
+                        writeln!(serial1, "Setting sampling rate to {}", rate);
+                        
                     }
-                    Command::NoCommand => {
-                        writeln!(serial1,"No command");
+                    Command::SetVRef(vref) => {
+                        log_error!(serial1, dac.select_internal_vref(), "Failed to select internal VREF");
+                        log_error!(serial1, dac.write_u16(vref), "Failed to write DAC");
+                        
                     }
 
                 }
