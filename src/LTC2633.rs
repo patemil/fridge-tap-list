@@ -27,8 +27,7 @@ impl<I: Write> LTC2633<I> {
     }
 
     pub fn write_u16(&mut self, val: u16) -> Result<u16, I::Error> {
-        let mut buf = [0u8; 2];
         self.device.write(LTC2633_I2CADDR,  &[CMD_WRITE_TO_AND_UPDATE | ADR_DACA, (val >> 4) as u8, (val << 4) as u8])?;
-        Ok(u16::from_be_bytes(buf))
+        Ok(val)
     }
 }
