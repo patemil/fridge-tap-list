@@ -185,9 +185,13 @@ fn main() -> ! {
     log_error!(serial1, dac.write_to_and_update_b(0), "Failed to write DAC");
 
     enum Command {
-        offseta(u16),
-        offsetb(u16),
-        fcount(u16),
+        Offseta(u16),
+        Offsetb(u16),
+        Fcount(u16),
+        Chsel(u16),
+        Run(u16),
+        Burst(u16),
+        Burstlength(u16),
     }
 
     impl FromStr for Command {
@@ -202,17 +206,37 @@ fn main() -> ! {
                 "offseta" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
-                    Ok(Command::offseta(value))
+                    Ok(Command::Offseta(value))
                 }
                 "offsetb" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
-                    Ok(Command::offsetb(value))
+                    Ok(Command::Offsetb(value))
                 }
                 "fcount" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
-                    Ok(Command::fcount(value))
+                    Ok(Command::Fcount(value))
+                }
+                "ch_sel" => {
+                    let value = parts.next().ok_or("No value")?;
+                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    Ok(Command::Chsel(value))
+                }
+                "run" => {
+                    let value = parts.next().ok_or("No value")?;
+                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    Ok(Command::Run(value))
+                }
+                "burst" => {
+                    let value = parts.next().ok_or("No value")?;
+                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    Ok(Command::Burst(value))
+                }
+                "burstlength" => {
+                    let value = parts.next().ok_or("No value")?;
+                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    Ok(Command::Burstlength(value))
                 }
                 _ => Err("Invalid command".to_string()),
             }
@@ -248,20 +272,32 @@ fn main() -> ! {
             if let Ok(cmd) = line.parse::<Command>() {
 
                 match cmd {
-                    Command::offseta(offset) => {
+                    Command::Offseta(offset) => {
                         writeln!(serial1,"Setting offset to {}", offset);
                         log_error!(serial1, dac.write_to_and_update_a(offset), "Failed to write to DAC");
                     }
-                    Command::offsetb(offset) => {
+                    Command::Offsetb(offset) => {
                         writeln!(serial1,"Setting offset to {}", offset);
                         log_error!(serial1, dac.write_to_and_update_b(offset), "Failed to write to DAC");
                     }
-                    Command::fcount(value) => {
+                    Command::Fcount(value) => {
                         writeln!(serial1, "Setting sampling rate to {}", value);
+                        log_error!(serial1, greenpak.write_cnt2(value as u8), "Failed to write CNT2");
+                    }
+                    Command::Chsel(value) => {
+                        writeln!(serial1, "Active channel {}", value);
+                    }
+                    Command::Run(value) => {
+                        writeln!(serial1, "Enable sampling {}", value);
+                    }
+                    Command::Burst(value) => {
+                        writeln!(serial1, "Enable burst sampling {}", value);
+                    }
+                    Command::Burstlength(value) => {
+                        writeln!(serial1, "Burst length {}", value);
                     }
                 }
             } else { 
-                
                 writeln!(serial1, "Command not found or missing parameter");
             }
 

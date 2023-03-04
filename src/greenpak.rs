@@ -22,7 +22,6 @@ impl<I: Write + WriteRead> GreenPAK<I> {
         for (idx, byte) in data.iter().enumerate() {
             self.device.write(ADDR, &[idx as u8, *byte])?;
         }
-
         Ok(())
     }
 
@@ -34,7 +33,6 @@ impl<I: Write + WriteRead> GreenPAK<I> {
         for (idx, chunk) in data.chunks_exact(16).enumerate() {
             self.device.write(ADDR_NVM, &[(idx * 16) as u8, chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5], chunk[6], chunk[7], chunk[8], chunk[9], chunk[10], chunk[11], chunk[12], chunk[13], chunk[14], chunk[15]])?;
         }
-
         Ok(())
     }
 
@@ -47,12 +45,10 @@ impl<I: Write + WriteRead> GreenPAK<I> {
     pub fn read_program(&mut self) -> Result<[u8; 256], <I as WriteRead>::Error> {
         let mut data = [0u8; 256];
         let mut buf = [0u8; 1];
-
         for idx in 0..256usize {
             self.device.write_read(ADDR, &[idx as u8], &mut buf)?;
             data[idx] = buf[0];
         }
-
         Ok(data)
     }
 
@@ -62,10 +58,13 @@ impl<I: Write + WriteRead> GreenPAK<I> {
         // Write Command.
         self.device.write(ADDR, &[0xC9, mask])?;
         self.device.write(ADDR, &[0x7A, byte])?;
-
         Ok(())
     }
-    
+
+    pub fn write_cnt2(&mut self, byte: u8) -> Result<(), <I as Write>::Error> {
+        self.device.write(ADDR, &[0xAF, byte])
+    }
+
     pub fn free(self) -> I {
         self.device
     }
