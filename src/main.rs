@@ -181,14 +181,13 @@ fn main() -> ! {
 
     // Set internal VREF
     log_error!(serial1, dac.select_internal_vref(), "Failed to select internal VREF");
-    log_error!(serial1, dac.write_u16(1000), "Failed to write DAC");
-
-   
+    log_error!(serial1, dac.write_to_and_update_a(0), "Failed to write DAC");
+    log_error!(serial1, dac.write_to_and_update_b(0), "Failed to write DAC");
 
     enum Command {
-        SetOffset(u16),
+        Setoffseta(u16),
+        Setoffsetb(u16),
         SetSamplingRate(u16),
-        SetVRef(u16),
     }
 
     impl FromStr for Command {
@@ -200,20 +199,20 @@ fn main() -> ! {
             let command = parts.next().ok_or("No command")?;
 
             match command {
-                "offset" => {
+                "offseta" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
-                    Ok(Command::SetOffset(value))
+                    Ok(Command::Setoffseta(value))
+                }
+                "offsetb" => {
+                    let value = parts.next().ok_or("No value")?;
+                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    Ok(Command::Setoffsetb(value))
                 }
                 "rate" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
                     Ok(Command::SetSamplingRate(value))
-                }
-                "vref" => {
-                    let value = parts.next().ok_or("No value")?;
-                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
-                    Ok(Command::SetVRef(value))
                 }
                 _ => Err("Invalid command".to_string()),
             }
@@ -249,22 +248,18 @@ fn main() -> ! {
             if let Ok(cmd) = line.parse::<Command>() {
 
                 match cmd {
-                    Command::SetOffset(offset) => {
+                    Command::Setoffseta(offset) => {
                         writeln!(serial1,"Setting offset to {}", offset);
-                        log_error!(serial1, dac.select_internal_vref(), "Failed to select internal VREF");
-                        log_error!(serial1, dac.write_u16(offset), "Failed to write to DAC");
+                        log_error!(serial1, dac.write_to_and_update_a(offset), "Failed to write to DAC");
+                    }
+                    Command::Setoffsetb(offset) => {
+                        writeln!(serial1,"Setting offset to {}", offset);
+                        log_error!(serial1, dac.write_to_and_update_b(offset), "Failed to write to DAC");
                     }
                     Command::SetSamplingRate(rate) => {
                         writeln!(serial1, "Setting sampling rate to {}", rate);
                         
                     }
-                    Command::SetVRef(vref) => {
-                        writeln!(serial1, "Setting internal VRef to {}", vref);
-                        log_error!(serial1, dac.select_internal_vref(), "Failed to select internal VREF");
-                        log_error!(serial1, dac.write_u16(vref), "Failed to write to DAC");
-                        
-                    }
-
                 }
             } else { 
                 writeln!(serial1, " Command not found or mising parameter");

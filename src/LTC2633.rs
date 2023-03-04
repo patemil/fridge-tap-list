@@ -16,6 +16,7 @@ pub struct LTC2633<I> {
 }
 
 impl<I: Write> LTC2633<I> {
+
     /// Create device driver instance.
     pub fn new(i2c: I) -> Self {
         LTC2633 { device: i2c }
@@ -26,8 +27,14 @@ impl<I: Write> LTC2633<I> {
         Ok(())
     }
 
-    pub fn write_u16(&mut self, val: u16) -> Result<u16, I::Error> {
+    pub fn write_to_and_update_a(&mut self, val: u16) -> Result<u16, I::Error> {
         self.device.write(LTC2633_I2CADDR,  &[CMD_WRITE_TO_AND_UPDATE | ADR_DACA, (val >> 4) as u8, (val << 4) as u8])?;
         Ok(val)
     }
+
+    pub fn write_to_and_update_b(&mut self, val: u16) -> Result<u16, I::Error> {
+        self.device.write(LTC2633_I2CADDR,  &[CMD_WRITE_TO_AND_UPDATE | ADR_DACA, (val >> 4) as u8, (val << 4) as u8])?;
+        Ok(val)
+    }
+
 }
