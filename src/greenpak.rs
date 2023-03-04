@@ -1,6 +1,6 @@
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-const ADDR: u8 =        0b0010000;
+const ADDR: u8 =        0b0011000;
 const ADDR_NVM: u8 =    0b0001010;
 const ADDR_EEPROM: u8 = 0b0001011;
 
