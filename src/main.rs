@@ -185,9 +185,9 @@ fn main() -> ! {
     log_error!(serial1, dac.write_to_and_update_b(0), "Failed to write DAC");
 
     enum Command {
-        Setoffseta(u16),
-        Setoffsetb(u16),
-        SetSamplingRate(u16),
+        offseta(u16),
+        offsetb(u16),
+        fcount(u16),
     }
 
     impl FromStr for Command {
@@ -199,20 +199,20 @@ fn main() -> ! {
             let command = parts.next().ok_or("No command")?;
 
             match command {
-                "Setoffseta" => {
+                "offseta" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
-                    Ok(Command::Setoffseta(value))
+                    Ok(Command::offseta(value))
                 }
                 "offsetb" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
-                    Ok(Command::Setoffsetb(value))
+                    Ok(Command::offsetb(value))
                 }
-                "rate" => {
+                "fcount" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
-                    Ok(Command::SetSamplingRate(value))
+                    Ok(Command::fcount(value))
                 }
                 _ => Err("Invalid command".to_string()),
             }
@@ -248,20 +248,20 @@ fn main() -> ! {
             if let Ok(cmd) = line.parse::<Command>() {
 
                 match cmd {
-                    Command::Setoffseta(offset) => {
+                    Command::offseta(offset) => {
                         writeln!(serial1,"Setting offset to {}", offset);
                         log_error!(serial1, dac.write_to_and_update_a(offset), "Failed to write to DAC");
                     }
-                    Command::Setoffsetb(offset) => {
+                    Command::offsetb(offset) => {
                         writeln!(serial1,"Setting offset to {}", offset);
                         log_error!(serial1, dac.write_to_and_update_b(offset), "Failed to write to DAC");
                     }
-                    Command::SetSamplingRate(rate) => {
-                        writeln!(serial1, "Setting sampling rate to {}", rate);
-                        
+                    Command::fcount(value) => {
+                        writeln!(serial1, "Setting sampling rate to {}", value);
                     }
                 }
             } else { 
+                
                 writeln!(serial1, "Command not found or missing parameter");
             }
 
