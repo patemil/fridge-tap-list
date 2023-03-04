@@ -262,7 +262,7 @@ fn main() -> ! {
                     }
                 }
             } else { 
-                writeln!(serial1, " Command not found or mising parameter");
+                writeln!(serial1, "Command not found or missing parameter");
             }
 
             //writeln!(serial1,"line read :{} :{}",line.len(), line);
