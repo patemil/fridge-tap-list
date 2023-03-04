@@ -199,7 +199,7 @@ fn main() -> ! {
             let command = parts.next().ok_or("No command")?;
 
             match command {
-                "offseta" => {
+                "Setoffseta" => {
                     let value = parts.next().ok_or("No value")?;
                     let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
                     Ok(Command::Setoffseta(value))
