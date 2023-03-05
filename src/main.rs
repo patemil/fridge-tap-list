@@ -247,7 +247,7 @@ fn main() -> ! {
 
     writeln!(serial1,"");
     writeln!(serial1,"");
-    writeln!(serial1,"FFI 2023-02-23");
+    writeln!(serial1,"FFI 2023-02-23\n");
 
     loop {
 
@@ -289,6 +289,7 @@ fn main() -> ! {
                     }
                     Command::Run(value) => {
                         writeln!(serial1, "Enable sampling {}", value);
+                        log_error!(serial1, greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
                     }
                     Command::Burst(value) => {
                         writeln!(serial1, "Enable burst sampling {}", value);
@@ -298,7 +299,7 @@ fn main() -> ! {
                     }
                 }
             } else { 
-                writeln!(serial1, "Command not found or missing parameter");
+                writeln!(serial1, "Command not found or missing parameter\n");
             }
 
             //writeln!(serial1,"line read :{} :{}",line.len(), line);
