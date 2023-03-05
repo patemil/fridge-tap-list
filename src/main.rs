@@ -296,6 +296,7 @@ fn main() -> ! {
                     }
                     Command::Burstlength(value) => {
                         writeln!(serial1, "Burst length {}", value);
+                        log_error!(serial1, greenpak.write_cnt0(value), "Failed to write CNT0");
                     }
                 }
             } else { 
