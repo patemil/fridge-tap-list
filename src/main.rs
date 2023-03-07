@@ -271,16 +271,24 @@ fn main() -> ! {
 
         loop{
             loop {
+
                 let c : char = char::from_u32(block!(serial1.read()).unwrap().into()).unwrap();
 
                 match c {
                     '\r' => break,
                     '\n' => break,
-                    '\u{8}' => {line.pop();},
-                    _ => line.push(c),
+                    '\u{8}' => {
+                        line.pop();
+                        write!(serial1,"\u{8} \u{8}");
+                    },
+                    _ => {
+                        line.push(c);
+                        write!(serial1,"{}",c);
+
+                    },
                 }
 
-                write!(serial1,"\u{8} \r{}",line);
+                
             }
             //writeln!(serial1,"line read :{} :{}",line.len(), line);
 
