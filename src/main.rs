@@ -259,7 +259,7 @@ fn main() -> ! {
 
     writeln!(serial1,"");
     writeln!(serial1,"");
-    writeln!(serial1,"FFI 2023-02-23\n");
+    writeln!(serial1,"FFI 2023-02-23\n\r");
 
     loop {
 
@@ -285,42 +285,42 @@ fn main() -> ! {
 
                 match cmd {
                     Command::Offseta(offset) => {
-                        writeln!(serial1,"Setting offset to {}\r", offset);
+                        writeln!(serial1,"\rSetting offset to {}\r", offset);
                         log_error!(serial1, dac.write_to_and_update_a(offset), "Failed to write to DAC");
                     }
                     Command::Offsetb(offset) => {
-                        writeln!(serial1,"Setting offset to {}\r", offset);
+                        writeln!(serial1,"\rSetting offset to {}\r", offset);
                         log_error!(serial1, dac.write_to_and_update_b(offset), "Failed to write to DAC");
                     }
                     Command::Fcount(value) => {
-                        writeln!(serial1, "Setting sampling rate to {}\r", value);
+                        writeln!(serial1, "\rSetting sampling rate to {}\r", value);
                         log_error!(serial1, greenpak.write_cnt2(value as u8), "Failed to write CNT2");
                     }
                     Command::Chsel(value) => {
-                        writeln!(serial1, "Active channel {}\r", value);
+                        writeln!(serial1, "\rActive channel {}\r", value);
                     }
                     Command::Run(value) => {
-                        writeln!(serial1, "Enable sampling {}\r", value);
+                        writeln!(serial1, "\rEnable sampling {}\r", value);
                         log_error!(serial1, greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
                     }
                     Command::Burst(value) => {
-                        writeln!(serial1, "Enable burst sampling {}\r", value);
+                        writeln!(serial1, "\rEnable burst sampling {}\r", value);
                     }
                     Command::Burstlength(value) => {
-                        writeln!(serial1, "Burst length {}\r", value);
+                        writeln!(serial1, "\rBurst length {}\r", value);
                         log_error!(serial1, greenpak.write_cnt0(value), "Failed to write CNT0");
                     }
                     Command::Gaina(value) => {
-                        writeln!(serial1, "Gain channel a {}\r", value);
+                        writeln!(serial1, "\rGain channel a {}\r", value);
                         log_error!(serial1, greenpak.write_cnt0(value), "Failed to write CNT0");
                     }
                     Command::Gainb(value) => {
-                        writeln!(serial1, "Gain channel b {}\r", value);
+                        writeln!(serial1, "\rGain channel b {}\r", value);
                         log_error!(serial1, greenpak.write_cnt0(value), "Failed to write CNT0");
                     }
                 }
             } else { 
-                writeln!(serial1, "Command not found or missing parameter\n\r");
+                writeln!(serial1, "\rCommand not found or missing parameter\n\r");
             }
 
             //writeln!(serial1,"line read :{} :{}",line.len(), line);
