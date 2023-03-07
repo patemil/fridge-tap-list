@@ -45,8 +45,8 @@ mod greenpak;
 mod sc18is606;
 
 use crate::ltc2633::LTC2633;
-
 extern crate alloc;
+
 
 #[global_allocator]  // necessary for correct work of alloc on ESP chips
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
@@ -151,6 +151,7 @@ fn main() -> ! {
 
     let mut greenpak = GreenPAK::new(i2c.acquire_i2c());
     let mut dac = LTC2633::new(i2c.acquire_i2c());
+    let mut spi = sc18is606::SC18IS606::new(i2c.acquire_i2c());
 
     let config = Config {
         baudrate: 115200,
@@ -183,6 +184,9 @@ fn main() -> ! {
     log_error!(serial1, dac.select_internal_vref(), "Failed to select internal VREF");
     log_error!(serial1, dac.write_to_and_update_a(0), "Failed to write DAC");
     log_error!(serial1, dac.write_to_and_update_b(0), "Failed to write DAC");
+
+    // SPI configuration
+    log_error!(serial1, spi.init(), "Failed to initialize SPI port to PGA");
 
     enum Command {
         Offseta(u16),
