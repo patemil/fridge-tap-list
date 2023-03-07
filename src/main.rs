@@ -196,8 +196,8 @@ fn main() -> ! {
         Run(u16),
         Burst(u16),
         Burstlength(u16),
-        Gaina(u16),
-        Gainb(u16),
+        Gaina(i16),
+        Gainb(i16),
     }
 
     impl FromStr for Command {
@@ -246,12 +246,12 @@ fn main() -> ! {
                 }
                 "gaina" => {
                     let value = parts.next().ok_or("No value")?;
-                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    let value:i16 = value.parse::<i16>().map_err(|_| "Invalid value")?;
                     Ok(Command::Gaina(value))
                 }
                 "gainb" => {
                     let value = parts.next().ok_or("No value")?;
-                    let value = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    let value:i16 = value.parse::<i16>().map_err(|_| "Invalid value")?;
                     Ok(Command::Gainb(value))
                 }
                 _ => Err("Invalid command".to_string()),
@@ -320,7 +320,7 @@ fn main() -> ! {
                     }
                     Command::Gainb(value) => {
                         writeln!(serial1, "\rGain channel b {}\r", value);
-                        log_error!(serial1, greenpak.write_cnt0(value), "Failed to write CNT0");
+                        log_error!(serial1, spi.setgainb(value as u8), "Failed to write gain B");
                     }
                 }
             } else { 
