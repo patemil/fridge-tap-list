@@ -198,6 +198,7 @@ fn main() -> ! {
         Burstlength(u16),
         Gaina(i16),
         Gainb(i16),
+        Reada(u16),
     }
 
     impl FromStr for Command {
@@ -253,6 +254,11 @@ fn main() -> ! {
                     let value = parts.next().ok_or("No value")?;
                     let value:i16 = value.parse::<i16>().map_err(|_| "Invalid value")?;
                     Ok(Command::Gainb(value))
+                }
+                "reada" => {
+                    let value = parts.next().ok_or("No register")?;
+                    let value:u16 = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    Ok(Command::Reada(value))
                 }
                 _ => Err("Invalid command".to_string()),
             }
@@ -329,6 +335,10 @@ fn main() -> ! {
                     Command::Gainb(value) => {
                         writeln!(serial1, "\rGain channel b {}\r", value);
                         log_error!(serial1, spi.setgainb(value as u8), "Failed to write gain B");
+                    }
+                    Command::Reada(value) => {
+                        writeln!(serial1, "\rRead from A register {}\r", value);
+                        log_error!(serial1, spi.read_u16(value as u8), "Failed to write gain B");
                     }
                 }
             } else { 

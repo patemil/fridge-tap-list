@@ -30,7 +30,7 @@ impl<I: Write + WriteRead> SC18IS606<I> {
         Ok(())
     }
 
-    fn read_u16(&mut self, reg: u8) -> Result<u16, <I as WriteRead>::Error> {
+    pub fn read_u16(&mut self, reg: u8) -> Result<u16, <I as WriteRead>::Error> {
         let mut buf = [0u8; 2];
         self.device.write_read(SC18IS606_I2CADDR, &[reg], &mut buf[..])?;
         Ok(u16::from_be_bytes(buf))
