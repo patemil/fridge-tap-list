@@ -29,7 +29,7 @@ impl<I: Write + Read + WriteRead> SC18IS606<I> {
 
     // read registers in LMH6401
     pub fn read_rega1(&mut self) -> Result<(), <I as Write>::Error> {
-        self.device.write(SC18IS606_I2CADDR, &mut[0x80,0x0,0x0,0x0,0x0,0x0,0x0,0x0])?; // read register
+        self.device.write(SC18IS606_I2CADDR, &mut[0x81,0x0,0x0,0x0,0x0,0x0,0x0,0x0])?; // read register
         //self.device.read(SC18IS606_I2CADDR, &mut[0x0,0x0,0x0,0x0,0x0,0x0])?; // read register
         Ok(())
     }
