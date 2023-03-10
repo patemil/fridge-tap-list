@@ -34,7 +34,7 @@ impl<I: Write + Read + WriteRead> SC18IS606<I> {
         Ok(())
     }
     pub fn read_rega2(&mut self) -> Result<(), <I as Read>::Error> {
-        self.device.read(SC18IS606_I2CADDR, &mut[0x0,0x0,0x0,0x0,0x0,0x0])?; // read register
+        self.device.read(SC18IS606_I2CADDR, &mut[0x0,0x0,0x0,0x0,0x0,0x0,0x0])?; // read register
         Ok(())
     }
 
