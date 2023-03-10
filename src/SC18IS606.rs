@@ -17,7 +17,7 @@ impl<I: Write + Read + WriteRead> SC18IS606<I> {
     }
 
     pub fn init(&mut self) -> Result<(), <I as Write>::Error> {
-        self.device.write(SC18IS606_I2CADDR, &[0xF0, 0x02]) ?;
+        self.device.write(SC18IS606_I2CADDR, &[0xF0, 0x01]) ?;
         Ok(())
     }
 
