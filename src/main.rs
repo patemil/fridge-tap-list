@@ -186,7 +186,7 @@ fn main() -> ! {
     log_error!(serial1, spi.init(), "Failed to initialize SPI port to PGA");
     let mut data = [0u8; 16];
     data = spi.read_version().unwrap();
-    writeln!(serial1,String::from_utf8(&data) );
+    writeln!(serial1, "{}", String::from_utf8_lossy(&data) );
 
     enum Command {
         Offseta(u16),
