@@ -1,4 +1,4 @@
-use embedded_hal::blocking::i2c::{Write, WriteRead};
+use embedded_hal::blocking::i2c::{Write, Read, WriteRead};
 
 const SC18IS606_I2CADDR: u8 = 0b0101000;
 const FUNCID_SS0: u8 = 0x01;
@@ -9,7 +9,7 @@ pub struct SC18IS606<I> {
     device: I,
 }
 
-impl<I: Write + WriteRead> SC18IS606<I> {
+impl<I: Write + Read + WriteRead> SC18IS606<I> {
 
     /// Create device driver instance.
     pub fn new(i2c: I) -> Self {
@@ -27,6 +27,16 @@ impl<I: Write + WriteRead> SC18IS606<I> {
         Ok(data)
     }
 
+    // read registers in LMH6401
+    pub fn read_rega1(&mut self) -> Result<(), <I as Write>::Error> {
+        self.device.write(SC18IS606_I2CADDR, &mut[0x80,0x0,0x0,0x0,0x0,0x0,0x0,0x0])?; // read register
+        //self.device.read(SC18IS606_I2CADDR, &mut[0x0,0x0,0x0,0x0,0x0,0x0])?; // read register
+        Ok(())
+    }
+    pub fn read_rega2(&mut self) -> Result<(), <I as Read>::Error> {
+        self.device.read(SC18IS606_I2CADDR, &mut[0x0,0x0,0x0,0x0,0x0,0x0])?; // read register
+        Ok(())
+    }
 
     pub fn setgaina(&mut self, gain: u8) -> Result<(), <I as Write>::Error> {
         self.device.write(SC18IS606_I2CADDR, &[FUNCID_SS0, 0x2, gain]) ?;

@@ -330,6 +330,8 @@ fn main() -> ! {
                     Command::Gaina(value) => {
                         writeln!(serial1, "\rGain channel a {}\r", value);
                         log_error!(serial1, spi.setgaina(value as u8), "Failed to write gain A");
+                        log_error!(serial1, spi.read_rega1(), "Failed to write gain A");
+                        log_error!(serial1, spi.read_rega2(), "Failed to write gain A");
                     }
                     Command::Gainb(value) => {
                         writeln!(serial1, "\rGain channel b {}\r", value);
