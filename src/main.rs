@@ -84,9 +84,6 @@ use esp_backtrace as _;
 use greenpak::GreenPAK;
 use shared_bus::BusManagerSimple;
 
-
-
-
 macro_rules! log_error {
     ($sport:ident, $value:expr, $message:expr) => {
         match $value {
@@ -187,6 +184,9 @@ fn main() -> ! {
 
     // SPI configuration
     log_error!(serial1, spi.init(), "Failed to initialize SPI port to PGA");
+    let mut data = [0u8; 16];
+    data = spi.read_version().unwrap();
+    writeln!(serial1,String::from_utf8(&data) );
 
     enum Command {
         Offseta(u16),
@@ -270,7 +270,7 @@ fn main() -> ! {
     writeln!(serial1,"");
     writeln!(serial1,"");
     writeln!(serial1,"FFI 2023-02-23\n\r");
-
+    
     loop {
 
         let mut line = String::with_capacity(40);

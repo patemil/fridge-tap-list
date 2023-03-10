@@ -3,6 +3,7 @@ use embedded_hal::blocking::i2c::{Write, WriteRead};
 const SC18IS606_I2CADDR: u8 = 0b0101000;
 const FUNCID_SS0: u8 = 0x01;
 const FUNCID_SS1: u8 = 0x02;
+const FUNCID_VERSION: u8 = 0xFE;
 
 pub struct SC18IS606<I> {
     device: I,
@@ -19,6 +20,13 @@ impl<I: Write + WriteRead> SC18IS606<I> {
         self.device.write(SC18IS606_I2CADDR, &[0xF0, 0x02]) ?;
         Ok(())
     }
+
+    pub fn read_version(&mut self) -> Result <[u8; 16], <I as WriteRead>::Error> {
+        let mut data = [0u8; 16];
+        self.device.write_read(SC18IS606_I2CADDR, &[FUNCID_VERSION], &mut data)?;
+        Ok(data)
+    }
+
 
     pub fn setgaina(&mut self, gain: u8) -> Result<(), <I as Write>::Error> {
         self.device.write(SC18IS606_I2CADDR, &[FUNCID_SS0, 0x2, gain]) ?;
