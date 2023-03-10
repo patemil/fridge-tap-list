@@ -113,7 +113,7 @@ use core::char;
 fn main() -> ! {
     
     init_heap();
-    println!("Hello world");
+    //println!("Hello world");
     let peripherals = esp32c3_hal::peripherals::Peripherals::take();
     let mut system = peripherals.SYSTEM.split();
     let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
@@ -164,7 +164,6 @@ fn main() -> ! {
     );
 
     let mut serial1 = Uart::new_with_config(peripherals.UART1, Some(config), Some(pins), &clocks);
-
 
     /*
     for i in 0..16 {
