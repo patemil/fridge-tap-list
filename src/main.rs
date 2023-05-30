@@ -76,10 +76,9 @@ fn main() -> ! {
         }
         Err(err) => {
             esp_println::println!("Error: {:?}", err);
+            loop {}
         }
     }
-
-    loop {}
 }
 
 fn main_failable() -> Result<!, Box<dyn Error>> {
@@ -240,8 +239,8 @@ fn main_failable() -> Result<!, Box<dyn Error>> {
         }
     }
 
-    writeln!(serial1, "")?;
-    writeln!(serial1, "")?;
+    writeln!(serial1)?;
+    writeln!(serial1)?;
     writeln!(serial1, "FFI 2023-02-23\n\r")?;
 
     loop {
@@ -260,17 +259,17 @@ fn main_failable() -> Result<!, Box<dyn Error>> {
                     }
                     _ => {
                         line.push(c);
-                        write!(serial1, "{}", c)?;
+                        write!(serial1, "{c}")?;
                     }
                 }
             }
             //writeln!(serial1,"line read :{} :{}",line.len(), line);
 
-            writeln!(serial1, "")?;
+            writeln!(serial1)?;
             if let Ok(cmd) = line.parse::<Command>() {
                 match cmd {
                     Command::Offseta(offset) => {
-                        writeln!(serial1, "\rSetting offset to {}\r", offset)?;
+                        writeln!(serial1, "\rSetting offset to {offset}\r")?;
                         log_error!(
                             serial1,
                             dac.write_to_and_update_a(offset),
@@ -278,7 +277,7 @@ fn main_failable() -> Result<!, Box<dyn Error>> {
                         );
                     }
                     Command::Offsetb(offset) => {
-                        writeln!(serial1, "\rSetting offset to {}\r", offset)?;
+                        writeln!(serial1, "\rSetting offset to {offset}\r")?;
                         log_error!(
                             serial1,
                             dac.write_to_and_update_b(offset),
@@ -286,7 +285,7 @@ fn main_failable() -> Result<!, Box<dyn Error>> {
                         );
                     }
                     Command::Fcount(value) => {
-                        writeln!(serial1, "\rSetting sampling rate to {}\r", value)?;
+                        writeln!(serial1, "\rSetting sampling rate to {value}\r")?;
                         log_error!(
                             serial1,
                             greenpak.write_cnt2(value as u8),
@@ -294,10 +293,10 @@ fn main_failable() -> Result<!, Box<dyn Error>> {
                         );
                     }
                     Command::Chsel(value) => {
-                        writeln!(serial1, "\rActive channel {}\r", value)?;
+                        writeln!(serial1, "\rActive channel {value}\r")?;
                     }
                     Command::Run(value) => {
-                        writeln!(serial1, "\rEnable sampling {}\r", value)?;
+                        writeln!(serial1, "\rEnable sampling {value}\r")?;
                         log_error!(
                             serial1,
                             greenpak.virtual_input(0b1000_0000, 0b0111_1111),
@@ -305,24 +304,24 @@ fn main_failable() -> Result<!, Box<dyn Error>> {
                         );
                     }
                     Command::Burst(value) => {
-                        writeln!(serial1, "\rEnable burst sampling {}\r", value)?;
+                        writeln!(serial1, "\rEnable burst sampling {value}\r")?;
                     }
                     Command::Burstlength(value) => {
-                        writeln!(serial1, "\rBurst length {}\r", value)?;
+                        writeln!(serial1, "\rBurst length {value}\r")?;
                         log_error!(serial1, greenpak.write_cnt0(value), "Failed to write CNT0");
                     }
                     Command::Gaina(value) => {
-                        writeln!(serial1, "\rGain channel a {}\r", value)?;
+                        writeln!(serial1, "\rGain channel a {value}\r")?;
                         log_error!(serial1, spi.setgaina(value as u8), "Failed to write gain A");
                         log_error!(serial1, spi.read_rega1(), "Failed to write gain A");
                         log_error!(serial1, spi.read_rega2(), "Failed to write gain A");
                     }
                     Command::Gainb(value) => {
-                        writeln!(serial1, "\rGain channel b {}\r", value)?;
+                        writeln!(serial1, "\rGain channel b {value}\r")?;
                         log_error!(serial1, spi.setgainb(value as u8), "Failed to write gain B");
                     }
                     Command::Reada(value) => {
-                        writeln!(serial1, "\rRead from A register {}\r", value)?;
+                        writeln!(serial1, "\rRead from A register {value}\r")?;
                         log_error!(serial1, spi.read_u16(value as u8), "Failed to write gain B");
                     }
                 }
@@ -333,7 +332,7 @@ fn main_failable() -> Result<!, Box<dyn Error>> {
             //writeln!(serial1,"line read :{} :{}",line.len(), line);
 
             line.clear();
-            writeln!(serial1, "")?;
+            writeln!(serial1)?;
         }
     }
 }
