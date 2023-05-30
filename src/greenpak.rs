@@ -22,7 +22,7 @@ impl<I: Write + WriteRead> GreenPAK<I> {
     }
 
     pub fn write_cnt0(&mut self, value: u16) -> Result<(), <I as Write>::Error> {
-        self.device.write(ADDR, &[0xA6, (value >> 8) as u8]);
+        self.device.write(ADDR, &[0xA6, (value >> 8) as u8])?;
         self.device.write(ADDR, &[0xA5, (value as u8)])
     }
 
