@@ -1,15 +1,14 @@
 #![no_std]
 #![no_main]
 
-mod ltc2633;
 mod greenpak;
+mod ltc2633;
 mod sc18is606;
 
 use crate::ltc2633::LTC2633;
 extern crate alloc;
 
-
-#[global_allocator]  // necessary for correct work of alloc on ESP chips
+#[global_allocator] // necessary for correct work of alloc on ESP chips
 static ALLOCATOR: esp_alloc::EspHeap = esp_alloc::EspHeap::empty();
 
 fn init_heap() {
@@ -25,19 +24,17 @@ fn init_heap() {
     }
 }
 
+use alloc::string::String;
 use alloc::{str::FromStr, string::ToString};
 use core::fmt::Write;
-use alloc::string::String;
-use nb::block;
-use fugit::RateExtU32;
-use esp32c3_hal::{
-    clock::ClockControl, i2c::I2C, prelude::*, timer::TimerGroup, Rtc, gpio::IO
+use esp32c3_hal::uart::{
+    config::{Config, DataBits, Parity, StopBits},
+    TxRxPins,
 };
-use esp32c3_hal::    uart::{
-        config::{Config, DataBits, Parity, StopBits},
-        TxRxPins,
-    };
 use esp32c3_hal::Uart;
+use esp32c3_hal::{clock::ClockControl, gpio::IO, i2c::I2C, prelude::*, timer::TimerGroup, Rtc};
+use fugit::RateExtU32;
+use nb::block;
 
 use esp_backtrace as _;
 
@@ -66,12 +63,10 @@ macro_rules! log_error {
     };
 }
 
-
 use core::char;
 
 #[riscv_rt::entry]
 fn main() -> ! {
-
     init_heap();
     //println!("Hello world");
     let peripherals = esp32c3_hal::peripherals::Peripherals::take();
@@ -133,10 +128,18 @@ fn main() -> ! {
     */
 
     // Enable slave select generation
-    log_error!(serial1, greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
+    log_error!(
+        serial1,
+        greenpak.virtual_input(0b1000_0000, 0b0111_1111),
+        "Failed to set virtual input"
+    );
 
     // Set internal VREF
-    log_error!(serial1, dac.select_internal_vref(), "Failed to select internal VREF");
+    log_error!(
+        serial1,
+        dac.select_internal_vref(),
+        "Failed to select internal VREF"
+    );
     log_error!(serial1, dac.write_to_and_update_a(0), "Failed to write DAC");
     log_error!(serial1, dac.write_to_and_update_b(0), "Failed to write DAC");
 
@@ -204,17 +207,17 @@ fn main() -> ! {
                 }
                 "gaina" => {
                     let value = parts.next().ok_or("No value")?;
-                    let value:i16 = value.parse::<i16>().map_err(|_| "Invalid value")?;
+                    let value: i16 = value.parse::<i16>().map_err(|_| "Invalid value")?;
                     Ok(Command::Gaina(value))
                 }
                 "gainb" => {
                     let value = parts.next().ok_or("No value")?;
-                    let value:i16 = value.parse::<i16>().map_err(|_| "Invalid value")?;
+                    let value: i16 = value.parse::<i16>().map_err(|_| "Invalid value")?;
                     Ok(Command::Gainb(value))
                 }
                 "reada" => {
                     let value = parts.next().ok_or("No register")?;
-                    let value:u16 = value.parse::<u16>().map_err(|_| "Invalid value")?;
+                    let value: u16 = value.parse::<u16>().map_err(|_| "Invalid value")?;
                     Ok(Command::Reada(value))
                 }
                 _ => Err("Invalid command".to_string()),
@@ -222,59 +225,69 @@ fn main() -> ! {
         }
     }
 
-    writeln!(serial1,"");
-    writeln!(serial1,"");
-    writeln!(serial1,"FFI 2023-02-23\n\r");
+    writeln!(serial1, "");
+    writeln!(serial1, "");
+    writeln!(serial1, "FFI 2023-02-23\n\r");
 
     loop {
-
         let mut line = String::with_capacity(40);
 
-        loop{
+        loop {
             loop {
-
-                let c : char = char::from_u32(block!(serial1.read()).unwrap().into()).unwrap();
+                let c: char = char::from_u32(block!(serial1.read()).unwrap().into()).unwrap();
 
                 match c {
                     '\r' => break,
                     '\n' => break,
                     '\u{8}' => {
                         line.pop();
-                        write!(serial1,"\u{8} \u{8}");
-                    },
+                        write!(serial1, "\u{8} \u{8}");
+                    }
                     _ => {
                         line.push(c);
-                        write!(serial1,"{}",c);
-
-                    },
+                        write!(serial1, "{}", c);
+                    }
                 }
-
-
             }
             //writeln!(serial1,"line read :{} :{}",line.len(), line);
 
-            writeln!(serial1,"");
+            writeln!(serial1, "");
             if let Ok(cmd) = line.parse::<Command>() {
-
                 match cmd {
                     Command::Offseta(offset) => {
-                        writeln!(serial1,"\rSetting offset to {}\r", offset);
-                        log_error!(serial1, dac.write_to_and_update_a(offset), "Failed to write to DAC");
+                        writeln!(serial1, "\rSetting offset to {}\r", offset);
+                        log_error!(
+                            serial1,
+                            dac.write_to_and_update_a(offset),
+                            "Failed to write to DAC"
+                        );
                     }
                     Command::Offsetb(offset) => {
-                        writeln!(serial1,"\rSetting offset to {}\r", offset);
-                        log_error!(serial1, dac.write_to_and_update_b(offset), "Failed to write to DAC");
+                        writeln!(serial1, "\rSetting offset to {}\r", offset);
+                        log_error!(
+                            serial1,
+                            dac.write_to_and_update_b(offset),
+                            "Failed to write to DAC"
+                        );
                     }
                     Command::Fcount(value) => {
                         writeln!(serial1, "\rSetting sampling rate to {}\r", value);
-                        log_error!(serial1, greenpak.write_cnt2(value as u8), "Failed to write CNT2");
+                        log_error!(
+                            serial1,
+                            greenpak.write_cnt2(value as u8),
+                            "Failed to write CNT2"
+                        );
                     }
                     Command::Chsel(value) => {
                         writeln!(serial1, "\rActive channel {}\r", value);
                     }
                     Command::Run(value) => {
                         writeln!(serial1, "\rEnable sampling {}\r", value);
-                        log_error!(serial1, greenpak.virtual_input(0b1000_0000, 0b0111_1111), "Failed to set virtual input");
+                        log_error!(
+                            serial1,
+                            greenpak.virtual_input(0b1000_0000, 0b0111_1111),
+                            "Failed to set virtual input"
+                        );
                     }
                     Command::Burst(value) => {
                         writeln!(serial1, "\rEnable burst sampling {}\r", value);
@@ -305,8 +318,7 @@ fn main() -> ! {
             //writeln!(serial1,"line read :{} :{}",line.len(), line);
 
             line.clear();
-            writeln!(serial1,"");
+            writeln!(serial1, "");
         }
-
     }
 }

@@ -1,6 +1,6 @@
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-const ADDR: u8 =        0b0011000;
+const ADDR: u8 = 0b0011000;
 
 pub struct GreenPAK<I> {
     device: I,
